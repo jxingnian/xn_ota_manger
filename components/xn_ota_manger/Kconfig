@@ -1,6 +1,6 @@
 menu "XN OTA Manager"
 
-config XN_APP_VERSION
+config CONFIG_APP_PROJECT_VER
     string "Application version string (x.y.z)"
     default "1.0.2"
 
