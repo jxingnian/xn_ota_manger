@@ -6,8 +6,9 @@ idf_component_register(
     INCLUDE_DIRS 
         "."
         "include"
-    PRIV_REQUIRES 
+    REQUIRES
         esp_http_client
+    PRIV_REQUIRES 
         esp_https_ota
         app_update
         json
