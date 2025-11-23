@@ -1,0 +1,15 @@
+idf_component_register(
+    SRCS 
+        "http_client.c"
+        "http_ota.c"
+        "src/xn_ota_manage.c"
+    INCLUDE_DIRS 
+        "."
+        "include"
+    PRIV_REQUIRES 
+        esp_http_client
+        esp_https_ota
+        app_update
+        json
+        nvs_flash
+)
