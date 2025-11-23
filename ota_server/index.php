@@ -432,21 +432,44 @@ if (is_dir($firmware_dir)) {
                     showMessage('success', '✅ 删除成功！');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showMessage('error', '❌ 删除失败: ' + data.message);
+                    showMessage('error', ' 删除失败: ' + data.message);
                 }
             } catch (e) {
-                showMessage('error', '❌ 删除失败: ' + e.message);
+                showMessage('error', ' 删除失败: ' + e.message);
             }
         }
 
         // 复制URL
         function copyUrl(filename) {
             const url = window.location.origin + '/firmware/' + filename;
-            navigator.clipboard.writeText(url).then(() => {
-                showMessage('success', '✅ URL已复制到剪贴板: ' + url);
-            }).catch(() => {
-                showMessage('error', '❌ 复制失败');
-            });
+
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                navigator.clipboard.writeText(url).then(() => {
+                    showMessage('success', ' URL：' + url);
+                }).catch(() => {
+                    showMessage('error', ' 复制失败');
+                });
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            input.setSelectionRange(0, input.value.length);
+
+            try {
+                const ok = document.execCommand('copy');
+                if (ok) {
+                    showMessage('success', ' URL：' + url);
+                } else {
+                    showMessage('error', ' 复制失败：' + url);
+                }
+            } catch (e) {
+                showMessage('error', ' 复制失败：' + url);
+            } finally {
+                document.body.removeChild(input);
+            }
         }
 
         // 显示消息
