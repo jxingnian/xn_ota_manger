@@ -127,7 +127,7 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
     }
 
     // 6. 连续下载并写入固件（检测丢包自动重传）
-    ESP_LOGI(TAG, "📦 开始下载固件，分块大小: %.1f KB", chunk_size / 1024.0);
+    ESP_LOGI(TAG, "开始下载固件，分块大小: %.1f KB", chunk_size / 1024.0);
     
     size_t chunk_start = 0;
     const int max_chunk_retries = 3;
@@ -152,12 +152,12 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
             int read_len = http_client_read(http_client, buffer + chunk_read, to_read);
             
             if (read_len < 0) {
-                ESP_LOGE(TAG, "❌ 读取错误");
+                ESP_LOGE(TAG, "读取固件数据失败");
                 break;
             } else if (read_len == 0) {
                 consecutive_zero_reads++;
                 if (consecutive_zero_reads >= max_zero_reads) {
-                    ESP_LOGW(TAG, "⚠️  检测到连接中断 (零读取 %d 次)", consecutive_zero_reads);
+                    ESP_LOGW(TAG, "检测到连接异常 (连续零读取 %d 次)", consecutive_zero_reads);
                     break;
                 }
                 vTaskDelay(pdMS_TO_TICKS(100));
@@ -186,13 +186,13 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
                 last_report = total_read;
             }
         } else {
-            // 块不完整，使用Range重试
-            ESP_LOGW(TAG, "⚠️  块 [%zu-%zu] 不完整: 期望 %zu，实际 %zu 字节", 
+            // 块不完整，使用 Range 重试
+            ESP_LOGW(TAG, "块 [%zu-%zu] 不完整: 期望 %zu，实际 %zu 字节", 
                      chunk_start, chunk_end, expected_chunk_size, chunk_read);
             
             bool retry_success = false;
             for (int retry = 0; retry < max_chunk_retries && !retry_success; retry++) {
-                ESP_LOGW(TAG, "🔄 Range重试块 [%zu-%zu] (%d/%d)", 
+                ESP_LOGW(TAG, "Range 重试块 [%zu-%zu] (%d/%d)", 
                          chunk_start, chunk_end, retry + 1, max_chunk_retries);
                 
                 // 关闭旧连接
@@ -252,7 +252,7 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
                     chunk_start = chunk_end + 1;
                     retry_success = true;
                     
-                    ESP_LOGI(TAG, "✅ Range重试成功，块 [%zu-%zu] 已下载", chunk_start - expected_chunk_size, chunk_end);
+                    ESP_LOGI(TAG, "Range 重试成功，块 [%zu-%zu] 已下载", chunk_start - expected_chunk_size, chunk_end);
                     
                     if (progress_cb) {
                         progress_cb(HTTP_OTA_EVENT_DOWNLOADING, total_read, content_length, user_data);
@@ -270,16 +270,16 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
                         http_client_set_header(http_client, "Range", range_continue);
                         
                         if (http_client_open(http_client, "GET") == ESP_OK) {
-                            ESP_LOGI(TAG, "✅ 重新建立连接，从 %zu 字节继续下载", chunk_start);
+                            ESP_LOGI(TAG, "重新建立连接，从 %zu 字节继续下载", chunk_start);
                         }
                     }
                 } else {
-                    ESP_LOGE(TAG, "❌ Range重试失败: 期望 %zu，实际 %zu", expected_chunk_size, retry_read);
+                    ESP_LOGE(TAG, "Range 重试失败: 期望 %zu，实际 %zu", expected_chunk_size, retry_read);
                 }
             }
             
             if (!retry_success) {
-                ESP_LOGE(TAG, "❌ 块 [%zu-%zu] 重试失败，已达最大次数", chunk_start, chunk_end);
+                ESP_LOGE(TAG, "块 [%zu-%zu] 重试失败，已达最大次数", chunk_start, chunk_end);
                 err = ESP_FAIL;
                 break;
             }
@@ -322,7 +322,7 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
         goto cleanup;
     }
 
-    ESP_LOGI(TAG, "✅ OTA升级成功! 总大小: %.2f KB", total_read / 1024.0);
+    ESP_LOGI(TAG, "OTA 升级成功，总大小: %.2f KB", total_read / 1024.0);
 
             // 调用进度回调 - 完成
             if (progress_cb) {
@@ -350,7 +350,7 @@ cleanup:
     }
 
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "❌ OTA升级失败");
+        ESP_LOGE(TAG, "OTA 升级失败");
         if (progress_cb) {
             progress_cb(HTTP_OTA_EVENT_FAILED, 0, 0, user_data);
         }
