@@ -1,6 +1,9 @@
-# Name,   Type, SubType, Offset,  Size, Flags
-# Note: if you have increased the bootloader size, make sure to update the offsets to avoid overlap
-nvs,      data, nvs,     0x9000,  0x6000,
-phy_init, data, phy,     0xf000,  0x1000,
-factory,  app,  factory, 0x10000, 1M,
-wifi_spiffs, data, spiffs,      , 0x100000,
+# Name,        Type, SubType, Offset,   Size,     Flags
+# Note: Two OTA slots + SPIFFS, suitable for 4MB flash.
+nvs,           data, nvs,     0x9000,   0x5000,
+otadata,       data, ota,     0xe000,   0x2000,
+phy_init,      data, phy,     0x10000,  0x1000,
+factory,       app,  factory, 0x20000,  1M,
+ota_0,         app,  ota_0,           , 1M,
+ota_1,         app,  ota_1,           , 1M,
+wifi_spiffs,   data, spiffs,          , 512K,
