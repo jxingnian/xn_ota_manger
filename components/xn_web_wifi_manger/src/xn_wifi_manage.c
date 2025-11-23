@@ -2,8 +2,8 @@
  * @Author: 星年 && jixingnian@gmail.com
  * @Date: 2025-11-22 16:24:42
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-23 11:41:04
- * @FilePath: \xn_web_wifi_config\components\xn_web_wifi_manger\src\xn_wifi_manage.c
+ * @LastEditTime: 2025-11-23 17:56:27
+ * @FilePath: \xn_ota_manger\components\xn_web_wifi_manger\src\xn_wifi_manage.c
  * @Description: WiFi 管理模块实现（封装 WiFi / 存储 / Web 配网，提供自动重连与状态管理）
  */
 
@@ -33,6 +33,16 @@ static wifi_manage_state_t  s_wifi_manage_state = WIFI_MANAGE_STATE_DISCONNECTED
 static wifi_manage_config_t s_wifi_cfg;
 /* WiFi 管理任务句柄 */
 static TaskHandle_t         s_wifi_manage_task  = NULL;
+
+/* 统一更新状态并通知上层回调（若配置了 wifi_event_cb） */
+static void wifi_manage_notify_state(wifi_manage_state_t new_state)
+{
+    s_wifi_manage_state = new_state;
+
+    if (s_wifi_cfg.wifi_event_cb) {
+        s_wifi_cfg.wifi_event_cb(new_state);
+    }
+}
 
 /* 遍历已保存 WiFi 时的状态 */
 static bool       s_wifi_connecting   = false;  /* 当前是否有一次 STA 连接正在进行 */
@@ -362,7 +372,7 @@ static void wifi_manage_on_wifi_event(wifi_module_event_t event)
 
     case WIFI_MODULE_EVENT_STA_GOT_IP: {
         /* 获取到 IP，认为一次连接流程成功结束 */
-        s_wifi_manage_state = WIFI_MANAGE_STATE_CONNECTED;
+        wifi_manage_notify_state(WIFI_MANAGE_STATE_CONNECTED);
         s_wifi_connecting   = false;
         s_wifi_try_index    = 0;      /* 下次自动重连从首选 WiFi 开始 */
         s_connect_failed_ts = 0;
@@ -377,7 +387,7 @@ static void wifi_manage_on_wifi_event(wifi_module_event_t event)
 
     case WIFI_MODULE_EVENT_STA_DISCONNECTED:
         /* 连接断开，等待管理任务按策略进行重连 */
-        s_wifi_manage_state = WIFI_MANAGE_STATE_DISCONNECTED;
+        wifi_manage_notify_state(WIFI_MANAGE_STATE_DISCONNECTED);
         s_wifi_connecting   = false;
         s_wifi_try_index    = 0;
         break;
@@ -433,7 +443,7 @@ static void wifi_manage_step(void)
 
         if (s_wifi_try_index >= count) {
             /* 本轮所有配置均尝试过，仍未连接成功，进入“整轮失败”状态 */
-            s_wifi_manage_state = WIFI_MANAGE_STATE_CONNECT_FAILED;
+            wifi_manage_notify_state(WIFI_MANAGE_STATE_CONNECT_FAILED);
             s_connect_failed_ts = xTaskGetTickCount();
             s_wifi_try_index    = 0;
             s_wifi_connecting   = false;
@@ -487,7 +497,7 @@ static void wifi_manage_step(void)
             /* 到达重试时间，从头开始新一轮遍历 */
             s_wifi_try_index    = 0;
             s_wifi_connecting   = false;
-            s_wifi_manage_state = WIFI_MANAGE_STATE_DISCONNECTED;
+            wifi_manage_notify_state(WIFI_MANAGE_STATE_DISCONNECTED);
         }
         break;
     }
