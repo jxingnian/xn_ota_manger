@@ -28,8 +28,6 @@ extern "C" {
 typedef struct {
     const char *url;                    /*!< OTA 固件下载 URL (HTTP) */
     int timeout_ms;                      /*!< HTTP 超时时间 (ms) */
-    bool skip_version_check;             /*!< 是否跳过版本检查 */
-    bool auto_reboot;                    /*!< OTA 成功后是否自动重启 */
 } http_ota_config_t;
 
 /**

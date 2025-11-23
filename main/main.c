@@ -31,14 +31,7 @@ static void ota_init_task(void *arg)
 {
 	(void)arg;
 
-	ota_manage_config_t cfg = OTA_MANAGE_DEFAULT_CONFIG();
-	esp_err_t ret = ota_manage_init(&cfg);
-	if (ret == ESP_OK) {
-		s_ota_inited = true;
-		ESP_LOGI(TAG, "ota_manage initialized after WiFi connected");
-	} else {
-		ESP_LOGE(TAG, "ota_manage_init failed: %s", esp_err_to_name(ret));
-	}
+	
 
 	vTaskDelete(NULL);
 }

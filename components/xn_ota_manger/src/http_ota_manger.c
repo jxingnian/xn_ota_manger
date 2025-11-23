@@ -329,12 +329,9 @@ static esp_err_t http_ota_perform(const http_ota_config_t *config,
         progress_cb(HTTP_OTA_EVENT_FINISH, total_read, total_read, user_data);
             }
 
-            // 自动重启
-            if (config->auto_reboot) {
                 ESP_LOGI(TAG, "3 秒后重启...");
                 vTaskDelay(pdMS_TO_TICKS(3000));
                 esp_restart();
-            }
 
 cleanup:
     // 清理资源
