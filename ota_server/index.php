@@ -7,6 +7,11 @@
  *  - 访问 http://your-domain/ 即可打开本页面；
  *  - 固件文件与 version.json 存放在 firmware/ 目录下。
  */
+ session_start();
+ if (empty($_SESSION['logged_in'])) {
+     header('Location: login.php');
+     exit;
+ }
 
 // 当前 OTA 配置
 $version_file = __DIR__ . '/firmware/version.json';
@@ -220,7 +225,8 @@ if (is_dir($firmware_dir)) {
     <div class="container">
         <header>
             <h1>📦 OTA固件管理</h1>
-            <a href="#" class="back-btn">独立 OTA 管理页面</a>
+            <a href="account.php" class="back-btn">账号设置</a>
+            <a href="login.php?logout=1" class="back-btn">退出登录</a>
         </header>
 
         <main>

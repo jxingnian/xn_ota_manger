@@ -4,6 +4,11 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
+ session_start();
+ if (empty($_SESSION['logged_in'])) {
+     echo json_encode(['success' => false, 'message' => '未登录或登录已过期']);
+     exit;
+ }
 
 $action = $_GET['action'] ?? '';
 $firmware_dir = __DIR__ . '/firmware';
