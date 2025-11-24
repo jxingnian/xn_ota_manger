@@ -1,10 +1,11 @@
 # ESP32 OTA 固件管理服务（宝塔部署说明）
 
-本目录提供一个独立的 OTA 固件管理小网站，配合 `xn_ota_manger` 工程中的 HTTP OTA 功能使用。
+本目录提供一个带登录保护的独立 OTA 固件管理小网站，配合 `xn_ota_manger` 工程中的 HTTP OTA 功能使用。
 
 - 网站语言：PHP（无需数据库）
-- 主要功能：上传固件、查看固件列表、删除固件、编辑版本配置（生成 `version.json`）
-- 返回的 `version.json` 与 `http_ota_module.h` 中的说明完全兼容：
+- 主要功能：登录后台、上传固件、查看固件列表、删除固件、编辑版本配置（生成 `version.json`）
+- 账号系统：默认账号为 `admin` / `admin123`，登录后可在“账号设置”页面修改；
+- 返回的 `version.json` 与 `components/xn_ota_manger/include/http_ota_manager.h` 中的说明完全兼容：
 
 ```json
 {"version":"1.0.1","url":"http://xxx/firmware.bin","description":"修复bug","force":false}
@@ -17,12 +18,20 @@
 将 `ota_server` 目录整体部署到网站根目录后，结构如下：
 
 - `index.php`
-  - OTA 固件管理网页（前端界面 + 与 API 交互）。
+  - OTA 固件管理主页（登录后访问），展示当前配置并提供上传/删除等操作。
 - `FirmwareAPI.php`
   - 后端 API：
     - `action=save_config`：保存 OTA 配置到 `firmware/version.json`；
     - `action=upload`：上传 `.bin` 固件到 `firmware/` 目录；
     - `action=delete`：从 `firmware/` 删除指定固件文件。
+- `login.php`
+  - 后台登录页面，未登录访问其它页面会自动跳转到此。
+- `account.php`
+  - 账号设置页面，用于修改登录用户名和密码。
+- `auth_config.php`
+  - 账号读写配置辅助脚本，内部使用 `auth.json` 存放加密后的凭据。
+- `auth.json`
+  - 登录账号配置文件，首次修改账号后自动生成（无需手动创建）。
 - `firmware/`
   - 固件文件和 `version.json` 存放目录（首次访问时由程序自动创建）。
 
@@ -51,13 +60,20 @@
 2. 将本工程中的 `ota_server` 目录里的所有文件上传到网站根目录下：
    - `index.php`
    - `FirmwareAPI.php`
-   - （`firmware` 目录可不必提前上传，运行时会自动创建）。
+   - `login.php`
+   - `account.php`
+   - `auth_config.php`
+   - （`firmware` 目录和 `auth.json` 可不必提前上传，运行时会自动创建）。
 3. 部署完成后，你的网站根目录大致如下：
 
 ```text
 /www/wwwroot/esp32_ota/
 ├─ index.php
 ├─ FirmwareAPI.php
+├─ login.php
+├─ account.php
+├─ auth_config.php
+├─ auth.json        # 修改账号后自动生成
 └─ firmware/        # 首次使用时自动创建
 ```
 
@@ -90,11 +106,14 @@ http://你的域名/
 http://你的域名/
 ```
 
-2. 页面上方“当前 OTA 配置”区域会显示：
+2. 首次访问会跳转到登录页面（`login.php`），使用后台账号登录：
+   - 默认账号：`admin` / `admin123`（部署完成后请尽快修改）。
+
+3. 登录成功后，页面上方“当前 OTA 配置”区域会显示：
    - `配置文件路径`：固定为 `/firmware/version.json`；
    - `设备访问地址`：例如 `http://your-domain.com/firmware/version.json`。
 
-3. 使用步骤：
+4. 使用步骤：
 
 - **步骤 1：上传固件**
   - 在“上传固件”模块中点击或拖拽 `.bin` 文件；
@@ -131,12 +150,13 @@ http://你的域名/
 
 ## 6. 安全性建议
 
-默认情况下，本 OTA 管理页面未做登录鉴权，建议配合宝塔站点安全策略使用：
+本 OTA 管理页面内置了一个简单的账号系统，但仍建议配合宝塔站点安全策略使用：
 
-1. 在宝塔站点设置中启用：
+1. 部署后第一时间登录后台，在“账号设置”中修改默认用户名和密码；
+2. 在宝塔站点设置中启用：
    - **访问限制 / 密码访问**（可设置简单的 HTTP Basic Auth 保护本页面）；
    - 或将站点绑定到仅内网可访问的地址。
-2. 若你需要更完善的用户系统，可在此基础上自行增加登录页，或接入现有的后台管理系统。
+3. 若你需要更完善的用户系统，可在此基础上接入现有的后台管理系统或权限体系。
 
 ---
 
@@ -153,3 +173,6 @@ http://你的域名/
 
 - **Q: 想把固件放到其他路径？**
   - A: 可以修改 `FirmwareAPI.php` 与 `index.php` 中关于 `firmware` 路径的部分，并相应调整设备侧的下载 URL 与 version_url。
+
+- **Q: 忘记后台登录密码怎么办？**
+  - A: 删除站点根目录下的 `auth.json` 文件后，系统会回退到默认账号 `admin` / `admin123`，然后重新登录并尽快修改为新的安全密码。
